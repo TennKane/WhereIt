@@ -1,0 +1,35 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --color-background: oklch(0.98 0.01 100);
+  --color-foreground: oklch(0.15 0.02 100);
+  --color-card: oklch(1 0 0);
+  --color-card-foreground: oklch(0.15 0.02 100);
+  --color-primary: oklch(0.55 0.15 260);
+  --color-primary-foreground: oklch(0.98 0.01 100);
+  --color-muted: oklch(0.95 0.01 100);
+  --color-muted-foreground: oklch(0.55 0.02 100);
+  --color-border: oklch(0.9 0.01 100);
+  --radius: 0.625rem;
+}
+
+.dark {
+  --color-background: oklch(0.15 0.02 260);
+  --color-foreground: oklch(0.95 0.01 100);
+  --color-card: oklch(0.2 0.02 260);
+  --color-card-foreground: oklch(0.95 0.01 100);
+  --color-primary: oklch(0.7 0.2 260);
+  --color-primary-foreground: oklch(0.15 0.02 260);
+  --color-muted: oklch(0.25 0.02 260);
+  --color-muted-foreground: oklch(0.7 0.02 260);
+  --color-border: oklch(0.3 0.02 260);
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: system-ui, -apple-system, sans-serif;
+}
