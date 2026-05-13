@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { deleteFurniture } from "@/lib/actions/furniture";
+import { deleteRoom } from "@/lib/actions/room";
 
 export const dynamic = "force-dynamic";
 
