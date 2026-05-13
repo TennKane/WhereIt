@@ -1,11 +1,13 @@
 import { db } from "@/lib/db";
 import { rooms, furnitures, items } from "@/lib/db/schema";
-import { eq, sql, count } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import Link from "next/link";
 import { DoorOpen, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/shared/empty-state";
+
+export const dynamic = "force-dynamic";
 
 export default async function RoomsPage() {
   const allRooms = await db

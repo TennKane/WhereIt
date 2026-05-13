@@ -12,8 +12,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { EmptyState } from "@/components/shared/empty-state";
-import { deleteRoom } from "@/lib/actions/room";
 import { deleteFurniture } from "@/lib/actions/furniture";
+
+export const dynamic = "force-dynamic";
 
 export default async function RoomDetailPage({
   params,

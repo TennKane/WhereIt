@@ -15,6 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { deleteItem } from "@/lib/actions/item";
 
+export const dynamic = "force-dynamic";
+
 export default async function FurnitureDetailPage({
   params,
 }: {
