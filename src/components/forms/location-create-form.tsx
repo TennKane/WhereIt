@@ -7,19 +7,17 @@ import { createLocation } from "@/lib/actions/location";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export function LocationCreateForm() {
+export function LocationCreateForm({ onSuccess }: { onSuccess?: () => void }) {
   const router = useRouter();
-  const [state, formAction, isPending] = useActionState(createLocation, {
-    success: false,
-    fieldErrors: {},
-  } as const);
+  const [state, formAction, isPending] = useActionState(createLocation, null);
 
   useEffect(() => {
-    if (state.success) {
+    if (state?.success) {
       toast.success(state.message ?? "创建成功");
-      router.push("/locations");
+      if (onSuccess) onSuccess();
+      else router.push("/locations");
     }
-  }, [state.success, state.message, router]);
+  }, [state, onSuccess, router]);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -34,7 +32,7 @@ export function LocationCreateForm() {
           required
           autoFocus
         />
-        {state.fieldErrors?.name && (
+        {state?.fieldErrors?.name && (
           <p className="mt-1 text-sm text-red-500">{state.fieldErrors.name[0]}</p>
         )}
       </div>

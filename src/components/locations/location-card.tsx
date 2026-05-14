@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { useActionState } from "react";
 import Link from "next/link";
-import { MapPin, Pencil, Trash2, X } from "lucide-react";
+import { MapPin, Pencil, Trash2 } from "lucide-react";
 import { deleteLocation, updateLocation } from "@/lib/actions/location";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Modal } from "@/components/ui/modal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface Props {
@@ -66,98 +67,68 @@ export function LocationCard({ id, name, zoneCount, storageCount }: Props) {
         </div>
       </Card>
 
-      {/* 重命名弹窗 */}
-      {renameOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-lg">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold">重命名场所</h3>
-              <button
-                onClick={() => { setRenameOpen(false); }}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <X className="size-5" />
-              </button>
-            </div>
-
-            <form action={renAction}>
-              <input type="hidden" name="id" value={id} />
-              <Input
-                name="name"
-                defaultValue={name}
-                className="mb-3"
-                autoFocus
-              />
-              {renState?.fieldErrors?.name && (
-                <p className="mb-3 text-sm text-red-500">{renState.fieldErrors.name[0]}</p>
-              )}
-              {renState?.message && !renState?.success && (
-                <p className="mb-3 text-sm text-red-500">{renState.message}</p>
-              )}
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setRenameOpen(false)}>
-                  取消
-                </Button>
-                <Button type="submit" disabled={renPending}>
-                  {renPending ? "保存中..." : "保存"}
-                </Button>
-              </div>
-            </form>
+      <Modal open={renameOpen} onClose={() => setRenameOpen(false)} title="重命名场所">
+        <form action={renAction}>
+          <input type="hidden" name="id" value={id} />
+          <Input
+            name="name"
+            defaultValue={name}
+            className="mb-3"
+            autoFocus
+          />
+          {renState?.fieldErrors?.name && (
+            <p className="mb-3 text-sm text-red-500">{renState.fieldErrors.name[0]}</p>
+          )}
+          {renState?.message && !renState?.success && (
+            <p className="mb-3 text-sm text-red-500">{renState.message}</p>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={() => setRenameOpen(false)}>
+              取消
+            </Button>
+            <Button type="submit" disabled={renPending}>
+              {renPending ? "保存中..." : "保存"}
+            </Button>
           </div>
-        </div>
-      )}
+        </form>
+      </Modal>
 
-      {/* 删除弹窗 */}
-      {deleteOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-lg">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold">删除场所</h3>
-              <button
-                onClick={() => { setDeleteOpen(false); setConfirmText(""); }}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <X className="size-5" />
-              </button>
-            </div>
+      <Modal open={deleteOpen} onClose={() => { setDeleteOpen(false); setConfirmText(""); }} title="删除场所">
+        <p className="mb-1 text-sm text-muted-foreground">
+          确定要删除 <strong>{name}</strong> 吗？
+        </p>
+        {(zoneCount > 0 || storageCount > 0) && (
+          <p className="mb-4 text-sm text-amber-500">
+            该场所下所有区域、储物及物品将一并删除，不可恢复。
+          </p>
+        )}
 
-            <p className="mb-1 text-sm text-muted-foreground">
-              确定要删除 <strong>{name}</strong> 吗？
-            </p>
-            {(zoneCount > 0 || storageCount > 0) && (
-              <p className="mb-4 text-sm text-amber-500">
-                该场所下所有区域、储物及物品将一并删除，不可恢复。
-              </p>
-            )}
+        <p className="mb-2 text-sm text-muted-foreground">
+          请输入 <strong>确认删除</strong> 以确认操作：
+        </p>
 
-            <p className="mb-2 text-sm text-muted-foreground">
-              请输入 <strong>确认删除</strong> 以确认操作：
-            </p>
-
-            <form action={delAction}>
-              <input type="hidden" name="id" value={id} />
-              <Input
-                value={confirmText}
-                onChange={(e) => setConfirmText(e.target.value)}
-                placeholder="确认删除"
-                className="mb-3"
-                autoFocus
-              />
-              {delState.message && (
-                <p className="mb-3 text-sm text-red-500">{delState.message}</p>
-              )}
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => { setDeleteOpen(false); setConfirmText(""); }}>
-                  取消
-                </Button>
-                <Button type="submit" variant="danger" disabled={confirmText !== "确认删除" || delPending}>
-                  {delPending ? "删除中..." : "确认删除"}
-                </Button>
-              </div>
-            </form>
+        <form action={delAction}>
+          <input type="hidden" name="id" value={id} />
+          <Input
+            value={confirmText}
+            onChange={(e) => setConfirmText(e.target.value)}
+            placeholder="确认删除"
+            className="mb-3"
+            autoFocus
+          />
+          {delState.message && (
+            <p className="mb-3 text-sm text-red-500">{delState.message}</p>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={() => { setDeleteOpen(false); setConfirmText(""); }}>
+              取消
+            </Button>
+            <Button type="submit" variant="danger" disabled={confirmText !== "确认删除" || delPending}>
+              {delPending ? "删除中..." : "确认删除"}
+            </Button>
           </div>
-        </div>
-      )}
+        </form>
+      </Modal>
     </>
   );
 }

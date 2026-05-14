@@ -12,24 +12,24 @@ export function ItemCreateForm({
   zoneId,
   locationId,
   layerCount,
+  onSuccess,
 }: {
   storageId: string;
   zoneId: string;
   locationId: string;
   layerCount: number;
+  onSuccess?: () => void;
 }) {
   const router = useRouter();
-  const [state, formAction, isPending] = useActionState(createItem, {
-    success: false,
-    fieldErrors: {},
-  } as const);
+  const [state, formAction, isPending] = useActionState(createItem, null);
 
   useEffect(() => {
-    if (state.success) {
+    if (state?.success) {
       toast.success(state.message ?? "添加成功");
-      router.push(`/locations/${locationId}/zones/${zoneId}/storages/${storageId}`);
+      if (onSuccess) onSuccess();
+      else router.push(`/locations/${locationId}/zones/${zoneId}/storages/${storageId}`);
     }
-  }, [state.success, state.message, router, locationId, zoneId, storageId]);
+  }, [state, onSuccess, router, locationId, zoneId, storageId]);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -46,7 +46,7 @@ export function ItemCreateForm({
           required
           autoFocus
         />
-        {state.fieldErrors?.name && (
+        {state?.fieldErrors?.name && (
           <p className="mt-1 text-sm text-red-500">{state.fieldErrors.name[0]}</p>
         )}
       </div>
@@ -75,7 +75,7 @@ export function ItemCreateForm({
           数量
         </label>
         <Input id="quantity" name="quantity" type="number" min={1} defaultValue={1} />
-        {state.fieldErrors?.quantity && (
+        {state?.fieldErrors?.quantity && (
           <p className="mt-1 text-sm text-red-500">{state.fieldErrors.quantity[0]}</p>
         )}
       </div>

@@ -7,19 +7,17 @@ import { createZone } from "@/lib/actions/zone";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export function ZoneCreateForm({ locationId }: { locationId: string }) {
+export function ZoneCreateForm({ locationId, onSuccess }: { locationId: string; onSuccess?: () => void }) {
   const router = useRouter();
-  const [state, formAction, isPending] = useActionState(createZone, {
-    success: false,
-    fieldErrors: {},
-  } as const);
+  const [state, formAction, isPending] = useActionState(createZone, null);
 
   useEffect(() => {
-    if (state.success) {
+    if (state?.success) {
       toast.success(state.message ?? "创建成功");
-      router.push(`/locations/${locationId}`);
+      if (onSuccess) onSuccess();
+      else router.push(`/locations/${locationId}`);
     }
-  }, [state.success, state.message, router, locationId]);
+  }, [state, onSuccess, router, locationId]);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -35,7 +33,7 @@ export function ZoneCreateForm({ locationId }: { locationId: string }) {
           required
           autoFocus
         />
-        {state.fieldErrors?.name && (
+        {state?.fieldErrors?.name && (
           <p className="mt-1 text-sm text-red-500">{state.fieldErrors.name[0]}</p>
         )}
       </div>

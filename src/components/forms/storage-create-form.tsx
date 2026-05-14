@@ -10,22 +10,22 @@ import { Input } from "@/components/ui/input";
 export function StorageCreateForm({
   zoneId,
   locationId,
+  onSuccess,
 }: {
   zoneId: string;
   locationId: string;
+  onSuccess?: () => void;
 }) {
   const router = useRouter();
-  const [state, formAction, isPending] = useActionState(createStorage, {
-    success: false,
-    fieldErrors: {},
-  } as const);
+  const [state, formAction, isPending] = useActionState(createStorage, null);
 
   useEffect(() => {
-    if (state.success) {
+    if (state?.success) {
       toast.success(state.message ?? "创建成功");
-      router.push(`/locations/${locationId}/zones/${zoneId}`);
+      if (onSuccess) onSuccess();
+      else router.push(`/locations/${locationId}/zones/${zoneId}`);
     }
-  }, [state.success, state.message, router, locationId, zoneId]);
+  }, [state, onSuccess, router, locationId, zoneId]);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -42,7 +42,7 @@ export function StorageCreateForm({
           required
           autoFocus
         />
-        {state.fieldErrors?.name && (
+        {state?.fieldErrors?.name && (
           <p className="mt-1 text-sm text-red-500">{state.fieldErrors.name[0]}</p>
         )}
       </div>
@@ -62,7 +62,7 @@ export function StorageCreateForm({
         <p className="mt-1 text-xs text-muted-foreground">
           设置 1 表示无分层，大于 1 会显示对应的层
         </p>
-        {state.fieldErrors?.layers && (
+        {state?.fieldErrors?.layers && (
           <p className="mt-1 text-sm text-red-500">{state.fieldErrors.layers[0]}</p>
         )}
       </div>
