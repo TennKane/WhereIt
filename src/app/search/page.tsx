@@ -32,7 +32,6 @@ export default async function SearchPage({
       name: items.name,
       description: items.description,
       quantity: items.quantity,
-      layerIndex: items.layerIndex,
       storageName: storages.name,
       zoneName: zones.name,
       locationName: locations.name,
@@ -92,16 +91,6 @@ export default async function SearchPage({
                       <span className="text-primary font-medium">
                         {item.storageName}
                       </span>
-                      {item.layerIndex !== null && (
-                        <>
-                          <span className="text-muted-foreground">→</span>
-                          <span className="text-muted-foreground">
-                            {item.layerIndex >= 0
-                              ? `第${item.layerIndex + 1}层`
-                              : "桌面"}
-                          </span>
-                        </>
-                      )}
                     </div>
                     {item.description && (
                       <p className="mt-1 text-xs text-muted-foreground">

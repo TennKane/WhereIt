@@ -23,7 +23,7 @@ export default async function ZoneDetailPage({
     .select({
       id: storages.id,
       name: storages.name,
-      layers: storages.layers,
+      shelves: storages.shelves,
       description: storages.description,
       itemCount: sql<number>`count(distinct ${items.id})`,
     })

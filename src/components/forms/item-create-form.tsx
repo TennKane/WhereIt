@@ -1,27 +1,36 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useState, useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createItem } from "@/lib/actions/item";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+export interface ShelfData {
+  name: string;
+  rows: { name: string }[];
+}
+
 export function ItemCreateForm({
   storageId,
   zoneId,
   locationId,
-  layerCount,
+  shelves,
   onSuccess,
 }: {
   storageId: string;
   zoneId: string;
   locationId: string;
-  layerCount: number;
+  shelves: ShelfData[];
   onSuccess?: () => void;
 }) {
   const router = useRouter();
+  const [shelfIndex, setShelfIndex] = useState(0);
   const [state, formAction, isPending] = useActionState(createItem, null);
+
+  const currentShelf = shelves[shelfIndex];
+  const rowCount = currentShelf?.rows.length ?? 1;
 
   useEffect(() => {
     if (state?.success) {
@@ -51,24 +60,35 @@ export function ItemCreateForm({
         )}
       </div>
 
-      {layerCount > 1 && (
+      {shelves.length > 0 && (
         <div>
-          <label htmlFor="layerIndex" className="mb-1.5 block text-sm font-medium">
-            存放层
-          </label>
-          <select
-            id="layerIndex"
-            name="layerIndex"
-            className="flex h-10 w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm"
-          >
-            {Array.from({ length: layerCount }, (_, i) => (
-              <option key={i} value={i}>
-                第 {i + 1} 层
-              </option>
-            ))}
-          </select>
+          <label className="mb-1.5 block text-sm font-medium">存放位置</label>
+          <div className="flex gap-2">
+            <select
+              name="shelfIndex"
+              value={shelfIndex}
+              onChange={(e) => setShelfIndex(Number(e.target.value))}
+              className="flex-1 rounded-lg border border-border bg-transparent px-3 py-2 text-sm"
+            >
+              {shelves.map((s, i) => (
+                <option key={i} value={i}>{s.name}</option>
+              ))}
+            </select>
+            {rowCount > 1 && (
+              <select
+                name="rowIndex"
+                className="flex-1 rounded-lg border border-border bg-transparent px-3 py-2 text-sm"
+              >
+                {currentShelf.rows.map((r, i) => (
+                  <option key={i} value={i}>{r.name}</option>
+                ))}
+              </select>
+            )}
+            {rowCount <= 1 && <input type="hidden" name="rowIndex" value="0" />}
+          </div>
         </div>
       )}
+      {shelves.length <= 1 && <input type="hidden" name="shelfIndex" value="0" />}
 
       <div>
         <label htmlFor="quantity" className="mb-1.5 block text-sm font-medium">

@@ -41,7 +41,7 @@ export const storages = sqliteTable("storages", {
     .notNull()
     .references(() => zones.id),
   name: text("name").notNull(),
-  layers: integer("layers").default(1),
+  shelves: text("shelves").notNull().default('[]'),
   description: text("description"),
   sortOrder: integer("sort_order").default(0),
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
@@ -55,7 +55,8 @@ export const items = sqliteTable("items", {
   storageId: text("storage_id")
     .notNull()
     .references(() => storages.id),
-  layerIndex: integer("layer_index").default(0),
+  shelfIndex: integer("shelf_index").default(0),
+  rowIndex: integer("row_index").default(0),
   name: text("name").notNull(),
   description: text("description"),
   quantity: integer("quantity").default(1),

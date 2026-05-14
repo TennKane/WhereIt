@@ -6,6 +6,14 @@ import { StorageDetailClient } from "@/components/locations/storage-detail-clien
 
 export const dynamic = "force-dynamic";
 
+function parseShelves(raw: string | null): { name: string; rows: { name: string }[] }[] {
+  try {
+    return JSON.parse(raw ?? "[]");
+  } catch {
+    return [{ name: "第一层", rows: [{ name: "第一格" }] }];
+  }
+}
+
 export default async function StorageDetailPage({
   params,
 }: {
@@ -26,16 +34,15 @@ export default async function StorageDetailPage({
     .select()
     .from(items)
     .where(eq(items.storageId, storageId))
-    .orderBy(items.layerIndex);
+    .orderBy(items.shelfIndex, items.rowIndex);
 
-  const layerCount = storage.layers ?? 1;
-  const layerIndices = Array.from({ length: layerCount }, (_, i) => i);
-  const itemsByLayer: Record<number, typeof allItems> = {};
+  const shelves = parseShelves(storage.shelves);
+
+  // group items by "shelfIndex-rowIndex"
+  const itemsByShelfRow: Record<string, typeof allItems> = {};
   for (const item of allItems) {
-    const layer = item.layerIndex ?? 0;
-    const existing = itemsByLayer[layer] ?? [];
-    existing.push(item);
-    itemsByLayer[layer] = existing;
+    const key = `${item.shelfIndex ?? 0}-${item.rowIndex ?? 0}`;
+    (itemsByShelfRow[key] ??= []).push(item);
   }
 
   return (
@@ -47,10 +54,8 @@ export default async function StorageDetailPage({
       storageId={storageId}
       storageName={storage.name}
       storageDescription={storage.description}
-      layerCount={layerCount}
-      layers={layerIndices}
-      itemsByLayer={itemsByLayer}
-      allItems={allItems}
+      shelves={shelves}
+      itemsByShelfRow={itemsByShelfRow}
     />
   );
 }

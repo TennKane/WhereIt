@@ -13,7 +13,7 @@ import { deleteStorage } from "@/lib/actions/storage";
 interface StorageItem {
   id: string;
   name: string;
-  layers: number | null;
+  shelves: string | null;
   description: string | null;
   itemCount: number;
 }
@@ -115,7 +115,7 @@ export function ZoneDetailClient({ locationId, locationName, zoneId, zoneName, s
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  {s.layers} 层 · {s.itemCount} 件物品
+                  {(() => { try { const sh = JSON.parse(s.shelves ?? "[]"); return sh.length + "层" + sh.reduce((a: number, x: any) => a + (x.rows?.length ?? 1), 0) + "格"; } catch { return "1层1格"; } })()} · {s.itemCount} 件物品
                 </p>
               </CardContent>
             </Card>

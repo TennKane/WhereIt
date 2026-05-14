@@ -9,7 +9,7 @@ import { z } from "zod";
 const createSchema = z.object({
   name: z.string().min(1, "储物名不能为空").max(30),
   zoneId: z.string().min(1),
-  layers: z.coerce.number().int().min(1).max(20).default(1),
+  shelves: z.string().min(2, "请至少添加一层"), // JSON string
   description: z.string().max(200).optional(),
 });
 
@@ -27,7 +27,7 @@ export async function createStorage(_: unknown, formData: FormData) {
   await db.insert(storages).values({
     name: parsed.data.name,
     zoneId: parsed.data.zoneId,
-    layers: parsed.data.layers,
+    shelves: parsed.data.shelves,
     description: parsed.data.description ?? null,
   });
 

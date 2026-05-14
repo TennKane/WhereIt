@@ -9,7 +9,8 @@ import { z } from "zod";
 const createSchema = z.object({
   name: z.string().min(1, "物品名不能为空").max(50),
   storageId: z.string().min(1),
-  layerIndex: z.coerce.number().int().default(0),
+  shelfIndex: z.coerce.number().int().default(0),
+  rowIndex: z.coerce.number().int().default(0),
   quantity: z.coerce.number().int().min(1).default(1),
   description: z.string().max(200).optional(),
 });
@@ -22,7 +23,8 @@ export async function createItem(_: unknown, formData: FormData) {
   await db.insert(items).values({
     name: parsed.data.name,
     storageId: parsed.data.storageId,
-    layerIndex: parsed.data.layerIndex,
+    shelfIndex: parsed.data.shelfIndex,
+    rowIndex: parsed.data.rowIndex,
     quantity: parsed.data.quantity,
     description: parsed.data.description ?? null,
   });
@@ -68,7 +70,8 @@ export async function updateItem(
     .update(items)
     .set({
       name: parsed.data.name,
-      layerIndex: parsed.data.layerIndex,
+      shelfIndex: parsed.data.shelfIndex,
+      rowIndex: parsed.data.rowIndex,
       quantity: parsed.data.quantity,
       description: parsed.data.description ?? null,
     })

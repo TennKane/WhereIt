@@ -7,6 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
+function parseShelves(raw: string | null): { name: string; rows: { name: string }[] }[] {
+  try {
+    return JSON.parse(raw ?? "[]");
+  } catch {
+    return [{ name: "第一层", rows: [{ name: "第一格" }] }];
+  }
+}
+
 export default async function EditItemPage({
   params,
 }: {
@@ -24,6 +32,7 @@ export default async function EditItemPage({
   if (!zone) redirect("/locations");
 
   const location = await db.select().from(locations).where(eq(locations.id, zone.locationId)).get();
+  const shelves = parseShelves(storage.shelves);
 
   return (
     <div className="mx-auto max-w-md">
@@ -48,12 +57,13 @@ export default async function EditItemPage({
             storageId={storage.id}
             zoneId={storage.zoneId}
             locationId={zone.locationId}
-            layerCount={storage.layers ?? 1}
+            shelves={shelves}
             defaultValues={{
               name: item.name,
               quantity: item.quantity ?? 1,
               description: item.description,
-              layerIndex: item.layerIndex ?? 0,
+              shelfIndex: item.shelfIndex ?? 0,
+              rowIndex: item.rowIndex ?? 0,
             }}
           />
         </CardContent>

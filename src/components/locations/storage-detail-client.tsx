@@ -8,19 +8,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Modal } from "@/components/ui/modal";
-import { ItemCreateForm } from "@/components/forms/item-create-form";
+import { ItemCreateForm, type ShelfData } from "@/components/forms/item-create-form";
 import { deleteItem } from "@/lib/actions/item";
 
 interface Item {
   id: string;
-  storageId: string | null;
-  layerIndex: number | null;
   name: string;
   description: string | null;
   quantity: number | null;
-  image: string | null;
-  createdAt: string | null;
-  updatedAt: string | null;
+  shelfIndex: number | null;
+  rowIndex: number | null;
 }
 
 interface Props {
@@ -31,20 +28,29 @@ interface Props {
   storageId: string;
   storageName: string;
   storageDescription: string | null;
-  layerCount: number;
-  layers: number[];
-  itemsByLayer: Record<number, Item[]>;
-  allItems: Item[];
+  shelves: ShelfData[];
+  itemsByShelfRow: Record<string, Item[]>; // key: "shelfIndex-rowIndex"
 }
 
 export function StorageDetailClient({
   locationId, locationName, zoneId, zoneName,
   storageId, storageName, storageDescription,
-  layerCount, layers, itemsByLayer, allItems,
+  shelves, itemsByShelfRow,
 }: Props) {
   const [open, setOpen] = useState(false);
+  const allItems = Object.values(itemsByShelfRow).flat();
+  const hasItems = allItems.length > 0;
 
-  if (allItems.length === 0) {
+  // Group items by shelf then row
+  const shelfDisplay = shelves.map((shelf, si) => {
+    const rows = shelf.rows.map((row, ri) => {
+      const items = itemsByShelfRow[`${si}-${ri}`] ?? [];
+      return { ...row, rowIndex: ri, items };
+    });
+    return { ...shelf, shelfIndex: si, rows };
+  });
+
+  if (!hasItems) {
     return (
       <div>
         <Link
@@ -62,6 +68,9 @@ export function StorageDetailClient({
               <p className="text-sm text-muted-foreground">
                 {locationName} → {zoneName} → {storageName}
               </p>
+              {storageDescription && (
+                <p className="text-xs text-muted-foreground mt-1">{storageDescription}</p>
+              )}
             </div>
             <Button onClick={() => setOpen(true)}>
               <Plus className="size-4" />
@@ -82,7 +91,7 @@ export function StorageDetailClient({
             storageId={storageId}
             zoneId={zoneId}
             locationId={locationId}
-            layerCount={layerCount}
+            shelves={shelves}
             onSuccess={() => setOpen(false)}
           />
         </Modal>
@@ -107,6 +116,9 @@ export function StorageDetailClient({
             <p className="text-sm text-muted-foreground">
               {locationName} → {zoneName} → {storageName}
             </p>
+            {storageDescription && (
+              <p className="text-xs text-muted-foreground mt-1">{storageDescription}</p>
+            )}
           </div>
           <Button onClick={() => setOpen(true)}>
             <Plus className="size-4" />
@@ -116,50 +128,62 @@ export function StorageDetailClient({
       </div>
 
       <div className="space-y-6">
-        {layers.map((layerIndex) => {
-          const layerItems = itemsByLayer[layerIndex] ?? [];
-          if (layerItems.length === 0) return null;
+        {shelfDisplay.map((shelf) => {
+          const hasAnyItems = shelf.rows.some(r => r.items.length > 0);
+          if (!hasAnyItems) return null;
 
           return (
-            <div key={layerIndex}>
-              <h2 className="mb-3 text-sm font-medium text-muted-foreground">
-                {layerIndex >= 0 ? `第 ${layerIndex + 1} 层` : "桌面"}
+            <div key={shelf.shelfIndex}>
+              <h2 className="mb-3 text-sm font-medium text-foreground">
+                {shelf.name}
               </h2>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {layerItems.map((item) => (
-                  <Card key={item.id} className="relative">
-                    <CardHeader className="flex-row items-start gap-3 space-y-0 pr-8">
-                      <Package className="mt-0.5 size-4 shrink-0 text-primary" />
-                      <div>
-                        <CardTitle className="text-sm">
-                          {item.name}
-                          {(item.quantity ?? 1) > 1 && (
-                            <Badge variant="secondary" className="ml-2 text-xs">
-                              x{item.quantity}
-                            </Badge>
-                          )}
-                        </CardTitle>
-                        {item.description && (
-                          <p className="mt-0.5 text-xs text-muted-foreground">
-                            {item.description}
-                          </p>
-                        )}
+              <div className="space-y-3">
+                {shelf.rows.map((row) => {
+                  if (row.items.length === 0) return null;
+                  return (
+                    <div key={row.rowIndex}>
+                      <h3 className="mb-1.5 text-xs text-muted-foreground ml-1">
+                        {row.name}
+                      </h3>
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {row.items.map((item) => (
+                          <Card key={item.id} className="relative">
+                            <CardHeader className="flex-row items-start gap-3 space-y-0 pr-8">
+                              <Package className="mt-0.5 size-4 shrink-0 text-primary" />
+                              <div>
+                                <CardTitle className="text-sm">
+                                  {item.name}
+                                  {(item.quantity ?? 1) > 1 && (
+                                    <Badge variant="secondary" className="ml-2 text-xs">
+                                      x{item.quantity}
+                                    </Badge>
+                                  )}
+                                </CardTitle>
+                                {item.description && (
+                                  <p className="mt-0.5 text-xs text-muted-foreground">
+                                    {item.description}
+                                  </p>
+                                )}
+                              </div>
+                            </CardHeader>
+                            <div className="flex gap-1 absolute right-2 top-2">
+                              <Button variant="ghost" size="icon" asChild className="size-7">
+                                <Link href={`/items/${item.id}/edit`}>
+                                  <span className="text-xs text-muted-foreground">✎</span>
+                                </Link>
+                              </Button>
+                              <form action={deleteItem.bind(null, item.id)}>
+                                <Button variant="ghost" size="icon" type="submit" className="size-7">
+                                  <Trash2 className="size-3 text-muted-foreground" />
+                                </Button>
+                              </form>
+                            </div>
+                          </Card>
+                        ))}
                       </div>
-                    </CardHeader>
-                    <div className="flex gap-1 absolute right-2 top-2">
-                      <Button variant="ghost" size="icon" asChild className="size-7">
-                        <Link href={`/items/${item.id}/edit`}>
-                          <span className="text-xs text-muted-foreground">✎</span>
-                        </Link>
-                      </Button>
-                      <form action={deleteItem.bind(null, item.id)}>
-                        <Button variant="ghost" size="icon" type="submit" className="size-7">
-                          <Trash2 className="size-3 text-muted-foreground" />
-                        </Button>
-                      </form>
                     </div>
-                  </Card>
-                ))}
+                  );
+                })}
               </div>
             </div>
           );
@@ -171,7 +195,7 @@ export function StorageDetailClient({
           storageId={storageId}
           zoneId={zoneId}
           locationId={locationId}
-          layerCount={layerCount}
+          shelves={shelves}
           onSuccess={() => setOpen(false)}
         />
       </Modal>

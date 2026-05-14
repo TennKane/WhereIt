@@ -20,7 +20,6 @@ export default async function Home() {
       storageName: storages.name,
       zoneName: zones.name,
       locationName: locations.name,
-      layerIndex: items.layerIndex,
     })
     .from(items)
     .leftJoin(storages, eq(items.storageId, storages.id))
@@ -96,11 +95,6 @@ export default async function Home() {
                   <span className="font-medium">{item.name}</span>
                   <span className="text-muted-foreground">
                     {item.locationName} → {item.zoneName} → {item.storageName}
-                    {item.layerIndex !== null && item.layerIndex >= 0
-                      ? ` → 第${item.layerIndex + 1}层`
-                      : item.layerIndex === -1
-                        ? " → 桌面"
-                        : ""}
                   </span>
                 </li>
               ))}
