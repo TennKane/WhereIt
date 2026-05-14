@@ -104,7 +104,7 @@ export async function login(_: unknown, formData: FormData) {
 export async function logout() {
   const cookieStore = await cookies();
   cookieStore.delete("session");
-  redirect("/login");
+  return { success: true as const };
 }
 
 export async function getSession() {

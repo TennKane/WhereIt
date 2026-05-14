@@ -4,6 +4,7 @@ import { Home, Search, Plus, MapPin, LogOut } from "lucide-react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
+import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { logout } from "@/lib/actions/auth";
@@ -13,6 +14,13 @@ export function Navbar() {
   const pathname = usePathname();
   const [query, setQuery] = useState("");
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const [logoutState, logoutAction, logoutPending] = useActionState(logout, null);
+
+  useEffect(() => {
+    if (logoutState?.success) {
+      window.location.href = "/login";
+    }
+  }, [logoutState]);
 
   // Don't show navbar on auth pages
   if (pathname === "/login" || pathname === "/register") return null;
@@ -82,8 +90,8 @@ export function Navbar() {
               新建
             </Link>
           </Button>
-          <form action={logout}>
-            <Button variant="ghost" size="sm" type="submit">
+          <form action={logoutAction}>
+            <Button variant="ghost" size="sm" type="submit" disabled={logoutPending}>
               <LogOut className="size-4" />
             </Button>
           </form>
