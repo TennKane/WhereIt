@@ -2,9 +2,8 @@ import { db } from "@/lib/db";
 import { locations, zones, storages, items } from "@/lib/db/schema";
 import { eq, count, sql } from "drizzle-orm";
 import { MapPin, Layers, Box, Package } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
 
@@ -76,15 +75,6 @@ export default async function Home() {
             <p className="text-3xl font-bold">{itemCount.count}</p>
           </CardContent>
         </Card>
-      </div>
-
-      <div className="mb-6 flex gap-3">
-        <Button asChild>
-          <Link href="/locations">管理场所</Link>
-        </Button>
-        <Button variant="outline" asChild>
-          <Link href="/locations/new">+ 新建场所</Link>
-        </Button>
       </div>
 
       <Card>
