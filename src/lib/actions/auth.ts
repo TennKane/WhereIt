@@ -58,7 +58,7 @@ export async function register(_: unknown, formData: FormData) {
     return { success: false as const, fieldErrors: { email: ["注册失败，请稍后重试"] } };
   }
 
-  redirect("/");
+  return { success: true as const, message: "注册成功" };
 }
 
 export async function login(_: unknown, formData: FormData) {
@@ -98,7 +98,7 @@ export async function login(_: unknown, formData: FormData) {
     return { success: false as const, fieldErrors: { email: ["登录失败，请稍后重试"] } };
   }
 
-  redirect("/");
+  return { success: true as const, message: "登录成功" };
 }
 
 export async function logout() {
