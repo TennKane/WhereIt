@@ -24,13 +24,13 @@ const loginSchema = z.object({
 });
 
 export async function register(_: unknown, formData: FormData) {
+  const parsed = registerSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success)
+    return { success: false as const, fieldErrors: parsed.error.flatten().fieldErrors };
+
+  const { email, password } = parsed.data;
+
   try {
-    const parsed = registerSchema.safeParse(Object.fromEntries(formData));
-    if (!parsed.success)
-      return { success: false as const, fieldErrors: parsed.error.flatten().fieldErrors };
-
-    const { email, password } = parsed.data;
-
     const existing = await db.select().from(users).where(eq(users.email, email)).get();
     if (existing) {
       return { success: false as const, fieldErrors: { email: ["该邮箱已注册"] } };
@@ -53,25 +53,22 @@ export async function register(_: unknown, formData: FormData) {
       maxAge: 7 * 24 * 60 * 60,
       path: "/",
     });
-
-    return { success: true as const, message: "注册成功" };
   } catch (error) {
     console.error("注册失败:", error);
-    return {
-      success: false as const,
-      fieldErrors: { email: ["注册失败，请稍后重试"] },
-    };
+    return { success: false as const, fieldErrors: { email: ["注册失败，请稍后重试"] } };
   }
+
+  redirect("/");
 }
 
 export async function login(_: unknown, formData: FormData) {
+  const parsed = loginSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success)
+    return { success: false as const, fieldErrors: parsed.error.flatten().fieldErrors };
+
+  const { email, password } = parsed.data;
+
   try {
-    const parsed = loginSchema.safeParse(Object.fromEntries(formData));
-    if (!parsed.success)
-      return { success: false as const, fieldErrors: parsed.error.flatten().fieldErrors };
-
-    const { email, password } = parsed.data;
-
     const user = await db.select().from(users).where(eq(users.email, email)).get();
     if (!user) {
       return { success: false as const, fieldErrors: { email: ["邮箱或密码错误"] } };
@@ -96,15 +93,12 @@ export async function login(_: unknown, formData: FormData) {
       maxAge: 7 * 24 * 60 * 60,
       path: "/",
     });
-
-    return { success: true as const, message: "登录成功" };
   } catch (error) {
     console.error("登录失败:", error);
-    return {
-      success: false as const,
-      fieldErrors: { email: ["登录失败，请稍后重试"] },
-    };
+    return { success: false as const, fieldErrors: { email: ["登录失败，请稍后重试"] } };
   }
+
+  redirect("/");
 }
 
 export async function logout() {

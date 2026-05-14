@@ -1,25 +1,15 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { useActionState } from "react";
 import { register } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export function RegisterForm() {
-  const router = useRouter();
   const [state, formAction, isPending] = useActionState(register, {
     success: false,
     fieldErrors: {},
   } as const);
-
-  useEffect(() => {
-    if (state.success) {
-      toast.success(state.message ?? "注册成功");
-      router.push("/");
-    }
-  }, [state.success, state.message, router]);
 
   return (
     <form action={formAction} className="space-y-4">
