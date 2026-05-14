@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { locations, zones, storages, items } from "@/lib/db/schema";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 
 const createSchema = z.object({
@@ -45,5 +45,28 @@ export async function deleteLocation(_: unknown, formData: FormData) {
   } catch (error) {
     console.error("删除场所失败:", error);
     return { success: false as const, message: "删除失败，请稍后重试" };
+  }
+}
+
+const updateSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1, "场所名不能为空").max(20),
+});
+
+export async function updateLocation(_: unknown, formData: FormData) {
+  const parsed = updateSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success)
+    return { success: false as const, fieldErrors: parsed.error.flatten().fieldErrors };
+
+  try {
+    await db
+      .update(locations)
+      .set({ name: parsed.data.name, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where(eq(locations.id, parsed.data.id));
+    revalidatePath("/locations");
+    return { success: true as const, message: "已更新" };
+  } catch (error) {
+    console.error("更新场所失败:", error);
+    return { success: false as const, message: "更新失败，请稍后重试" };
   }
 }

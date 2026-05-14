@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { useActionState } from "react";
 import Link from "next/link";
-import { MapPin, Trash2, X } from "lucide-react";
-import { deleteLocation } from "@/lib/actions/location";
+import { MapPin, Pencil, Trash2, X } from "lucide-react";
+import { deleteLocation, updateLocation } from "@/lib/actions/location";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,24 +17,23 @@ interface Props {
 }
 
 export function LocationCard({ id, name, zoneCount, storageCount }: Props) {
-  const [open, setOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
-  const [state, formAction, isPending] = useActionState(deleteLocation, {
-    success: false,
-    message: "",
+
+  const [delState, delAction, delPending] = useActionState(deleteLocation, {
+    success: false, message: "",
   } as const);
+  const [renState, renAction, renPending] = useActionState(updateLocation, null);
 
-  const confirmed = confirmText === "确认删除";
-
-  // 成功后关闭弹窗
-  if (state.success && open) {
-    setOpen(false);
+  if (delState.success && deleteOpen) {
+    setDeleteOpen(false);
     setConfirmText("");
   }
 
   return (
     <>
-      <Card className="relative">
+      <Card className="relative group">
         <Link href={`/locations/${id}`} className="block">
           <CardHeader className="flex-row items-center gap-3 space-y-0">
             <MapPin className="size-5 text-primary" />
@@ -47,26 +46,75 @@ export function LocationCard({ id, name, zoneCount, storageCount }: Props) {
           </CardContent>
         </Link>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute right-2 top-2 size-8 text-muted-foreground hover:text-red-500"
-          onClick={(e) => {
-            e.preventDefault();
-            setOpen(true);
-          }}
-        >
-          <Trash2 className="size-4" />
-        </Button>
+        <div className="absolute right-2 top-2 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8 text-muted-foreground hover:text-foreground"
+            onClick={(e) => { e.preventDefault(); setRenameOpen(true); }}
+          >
+            <Pencil className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8 text-muted-foreground hover:text-red-500"
+            onClick={(e) => { e.preventDefault(); setDeleteOpen(true); }}
+          >
+            <Trash2 className="size-4" />
+          </Button>
+        </div>
       </Card>
 
-      {open && (
+      {/* 重命名弹窗 */}
+      {renameOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-lg">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold">重命名场所</h3>
+              <button
+                onClick={() => { setRenameOpen(false); }}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            <form action={renAction}>
+              <input type="hidden" name="id" value={id} />
+              <Input
+                name="name"
+                defaultValue={name}
+                className="mb-3"
+                autoFocus
+              />
+              {renState?.fieldErrors?.name && (
+                <p className="mb-3 text-sm text-red-500">{renState.fieldErrors.name[0]}</p>
+              )}
+              {renState?.message && !renState?.success && (
+                <p className="mb-3 text-sm text-red-500">{renState.message}</p>
+              )}
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setRenameOpen(false)}>
+                  取消
+                </Button>
+                <Button type="submit" disabled={renPending}>
+                  {renPending ? "保存中..." : "保存"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 删除弹窗 */}
+      {deleteOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-lg">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold">删除场所</h3>
               <button
-                onClick={() => { setOpen(false); setConfirmText(""); }}
+                onClick={() => { setDeleteOpen(false); setConfirmText(""); }}
                 className="text-muted-foreground hover:text-foreground"
               >
                 <X className="size-5" />
@@ -86,7 +134,7 @@ export function LocationCard({ id, name, zoneCount, storageCount }: Props) {
               请输入 <strong>确认删除</strong> 以确认操作：
             </p>
 
-            <form action={formAction}>
+            <form action={delAction}>
               <input type="hidden" name="id" value={id} />
               <Input
                 value={confirmText}
@@ -95,23 +143,15 @@ export function LocationCard({ id, name, zoneCount, storageCount }: Props) {
                 className="mb-3"
                 autoFocus
               />
-              {state.message && (
-                <p className="mb-3 text-sm text-red-500">{state.message}</p>
+              {delState.message && (
+                <p className="mb-3 text-sm text-red-500">{delState.message}</p>
               )}
               <div className="flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => { setOpen(false); setConfirmText(""); }}
-                >
+                <Button type="button" variant="outline" onClick={() => { setDeleteOpen(false); setConfirmText(""); }}>
                   取消
                 </Button>
-                <Button
-                  type="submit"
-                  variant="danger"
-                  disabled={!confirmed || isPending}
-                >
-                  {isPending ? "删除中..." : "确认删除"}
+                <Button type="submit" variant="danger" disabled={confirmText !== "确认删除" || delPending}>
+                  {delPending ? "删除中..." : "确认删除"}
                 </Button>
               </div>
             </form>
