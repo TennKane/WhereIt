@@ -1,18 +1,11 @@
 import { db } from "@/lib/db";
-import { rooms, furnitures, items } from "@/lib/db/schema";
+import { locations, zones, storages, items } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { ItemEditForm } from "@/components/forms/item-edit-form";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { editItem } from "@/lib/actions/item";
 
 export default async function EditItemPage({
   params,
@@ -21,30 +14,21 @@ export default async function EditItemPage({
 }) {
   const { itemId } = await params;
 
-  const item = await db
-    .select()
-    .from(items)
-    .where(eq(items.id, itemId))
-    .get();
+  const item = await db.select().from(items).where(eq(items.id, itemId)).get();
   if (!item) notFound();
 
-  const furniture = await db
-    .select()
-    .from(furnitures)
-    .where(eq(furnitures.id, item.furnitureId))
-    .get();
-  if (!furniture) redirect("/rooms");
+  const storage = await db.select().from(storages).where(eq(storages.id, item.storageId)).get();
+  if (!storage) redirect("/locations");
 
-  const room = await db
-    .select()
-    .from(rooms)
-    .where(eq(rooms.id, furniture.roomId))
-    .get();
+  const zone = await db.select().from(zones).where(eq(zones.id, storage.zoneId)).get();
+  if (!zone) redirect("/locations");
+
+  const location = await db.select().from(locations).where(eq(locations.id, zone.locationId)).get();
 
   return (
     <div className="mx-auto max-w-md">
       <Link
-        href={`/rooms/${furniture.roomId}/furniture/${furniture.id}`}
+        href={`/locations/${zone.locationId}/zones/${storage.zoneId}/storages/${storage.id}`}
         className="mb-6 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="size-4" />
@@ -54,58 +38,24 @@ export default async function EditItemPage({
       <Card>
         <CardHeader>
           <CardTitle>编辑物品</CardTitle>
+          <p className="text-xs text-muted-foreground">
+            {location?.name} → {zone.name} → {storage.name}
+          </p>
         </CardHeader>
         <CardContent>
-          <form action={editItem.bind(null, itemId)} className="space-y-4">
-            <div>
-              <label
-                htmlFor="name"
-                className="mb-1.5 block text-sm font-medium"
-              >
-                物品名称
-              </label>
-              <Input
-                id="name"
-                name="name"
-                defaultValue={item.name}
-                required
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="quantity"
-                className="mb-1.5 block text-sm font-medium"
-              >
-                数量
-              </label>
-              <Input
-                id="quantity"
-                name="quantity"
-                type="number"
-                min={1}
-                defaultValue={item.quantity ?? 1}
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="description"
-                className="mb-1.5 block text-sm font-medium"
-              >
-                备注
-              </label>
-              <Input
-                id="description"
-                name="description"
-                defaultValue={item.description ?? ""}
-              />
-            </div>
-
-            <Button type="submit" className="w-full">
-              保存
-            </Button>
-          </form>
+          <ItemEditForm
+            itemId={item.id}
+            storageId={storage.id}
+            zoneId={storage.zoneId}
+            locationId={zone.locationId}
+            layerCount={storage.layers ?? 1}
+            defaultValues={{
+              name: item.name,
+              quantity: item.quantity ?? 1,
+              description: item.description,
+              layerIndex: item.layerIndex ?? 0,
+            }}
+          />
         </CardContent>
       </Card>
     </div>

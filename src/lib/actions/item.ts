@@ -2,40 +2,51 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { items } from "@/lib/db/schema";
+import { items, storages, zones } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
-const schema = z.object({
+const createSchema = z.object({
   name: z.string().min(1, "物品名不能为空").max(50),
-  furnitureId: z.string().min(1),
+  storageId: z.string().min(1),
   layerIndex: z.coerce.number().int().default(0),
   quantity: z.coerce.number().int().min(1).default(1),
   description: z.string().max(200).optional(),
 });
 
 export async function createItem(_: unknown, formData: FormData) {
-  const parsed = schema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { error: parsed.error.flatten().fieldErrors };
+  const parsed = createSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success)
+    return { success: false as const, fieldErrors: parsed.error.flatten().fieldErrors };
 
   await db.insert(items).values({
     name: parsed.data.name,
-    furnitureId: parsed.data.furnitureId,
+    storageId: parsed.data.storageId,
     layerIndex: parsed.data.layerIndex,
     quantity: parsed.data.quantity,
     description: parsed.data.description ?? null,
   });
 
-  revalidatePath(`/rooms`);
-}
+  const storage = await db
+    .select({ zoneId: storages.zoneId })
+    .from(storages)
+    .where(eq(storages.id, parsed.data.storageId))
+    .get();
+  if (storage) {
+    const zone = await db
+      .select({ locationId: zones.locationId })
+      .from(zones)
+      .where(eq(zones.id, storage.zoneId))
+      .get();
+    if (zone) revalidatePath(`/locations/${zone.locationId}/zones/${storage.zoneId}/storages/${parsed.data.storageId}`);
+  }
 
-export async function addItem(formData: FormData) {
-  await createItem(null, formData);
+  return { success: true as const, message: "物品添加成功" };
 }
 
 export async function deleteItem(id: string) {
   await db.delete(items).where(eq(items.id, id));
-  revalidatePath("/rooms");
+  revalidatePath("/locations");
 }
 
 export async function updateItem(
@@ -43,8 +54,15 @@ export async function updateItem(
   _: unknown,
   formData: FormData,
 ) {
-  const parsed = schema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { error: parsed.error.flatten().fieldErrors };
+  const parsed = createSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success)
+    return { success: false as const, fieldErrors: parsed.error.flatten().fieldErrors };
+
+  const item = await db
+    .select({ storageId: items.storageId })
+    .from(items)
+    .where(eq(items.id, id))
+    .get();
 
   await db
     .update(items)
@@ -56,9 +74,25 @@ export async function updateItem(
     })
     .where(eq(items.id, id));
 
-  revalidatePath("/rooms");
-}
+  let redirectPath = "/locations";
+  if (item) {
+    const storage = await db
+      .select({ zoneId: storages.zoneId })
+      .from(storages)
+      .where(eq(storages.id, item.storageId))
+      .get();
+    if (storage) {
+      const zone = await db
+        .select({ locationId: zones.locationId })
+        .from(zones)
+        .where(eq(zones.id, storage.zoneId))
+        .get();
+      if (zone) {
+        redirectPath = `/locations/${zone.locationId}/zones/${storage.zoneId}/storages/${item.storageId}`;
+      }
+    }
+    revalidatePath(redirectPath);
+  }
 
-export async function editItem(id: string, formData: FormData) {
-  await updateItem(id, null, formData);
+  return { success: true as const, message: "物品编辑成功", redirectTo: redirectPath };
 }

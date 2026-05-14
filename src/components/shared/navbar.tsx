@@ -1,20 +1,45 @@
 "use client";
 
-import { Home, Search, Plus, LayoutDashboard } from "lucide-react";
+import { Home, Search, Plus, MapPin, LogOut } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { logout } from "@/lib/actions/auth";
 
 export function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const [query, setQuery] = useState("");
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // Don't show navbar on auth pages
+  if (pathname === "/login" || pathname === "/register") return null;
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     if (query.trim()) {
       router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+    }
+  }
+
+  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = e.target.value;
+    setQuery(value);
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+
+    if (value.trim().length >= 1) {
+      timerRef.current = setTimeout(() => {
+        router.push(`/search?q=${encodeURIComponent(value.trim())}`);
+      }, 400);
     }
   }
 
@@ -34,7 +59,7 @@ export function Navbar() {
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={handleInputChange}
               placeholder="搜索物品..."
               className="pl-9 h-9"
             />
@@ -46,14 +71,22 @@ export function Navbar() {
             <Link href="/">首页</Link>
           </Button>
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/rooms">房间</Link>
+            <Link href="/locations">
+              <MapPin className="size-4" />
+              场所
+            </Link>
           </Button>
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/rooms/new">
+            <Link href="/locations/new">
               <Plus className="size-4" />
               新建
             </Link>
           </Button>
+          <form action={logout}>
+            <Button variant="ghost" size="sm" type="submit">
+              <LogOut className="size-4" />
+            </Button>
+          </form>
         </nav>
       </div>
     </header>

@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
-import { rooms, furnitures, items } from "@/lib/db/schema";
+import { locations, zones, storages, items } from "@/lib/db/schema";
 import { eq, count, sql } from "drizzle-orm";
-import { DoorOpen, Box, Package } from "lucide-react";
+import { MapPin, Layers, Box, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
@@ -9,23 +9,24 @@ import Link from "next/link";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [roomCount] = await db.select({ count: count() }).from(rooms);
-  const [furnitureCount] = await db
-    .select({ count: count() })
-    .from(furnitures);
+  const [locationCount] = await db.select({ count: count() }).from(locations);
+  const [zoneCount] = await db.select({ count: count() }).from(zones);
+  const [storageCount] = await db.select({ count: count() }).from(storages);
   const [itemCount] = await db.select({ count: count() }).from(items);
 
   const recentItems = await db
     .select({
       id: items.id,
       name: items.name,
-      furnitureName: furnitures.name,
-      roomName: rooms.name,
+      storageName: storages.name,
+      zoneName: zones.name,
+      locationName: locations.name,
       layerIndex: items.layerIndex,
     })
     .from(items)
-    .leftJoin(furnitures, eq(items.furnitureId, furnitures.id))
-    .leftJoin(rooms, eq(furnitures.roomId, rooms.id))
+    .leftJoin(storages, eq(items.storageId, storages.id))
+    .leftJoin(zones, eq(storages.zoneId, zones.id))
+    .leftJoin(locations, eq(zones.locationId, locations.id))
     .orderBy(sql`${items.createdAt} DESC`)
     .limit(5);
 
@@ -36,25 +37,34 @@ export default async function Home() {
         <p className="text-muted-foreground mt-1">家庭物品收纳管理</p>
       </div>
 
-      <div className="mb-8 grid gap-4 sm:grid-cols-3">
-        <Link href="/rooms">
+      <div className="mb-8 grid gap-4 sm:grid-cols-4">
+        <Link href="/locations">
           <Card className="transition-shadow hover:shadow-md">
             <CardHeader className="flex-row items-center gap-3 space-y-0">
-              <DoorOpen className="size-5 text-primary" />
-              <CardTitle className="text-sm">房间</CardTitle>
+              <MapPin className="size-5 text-primary" />
+              <CardTitle className="text-sm">场所</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">{roomCount.count}</p>
+              <p className="text-3xl font-bold">{locationCount.count}</p>
             </CardContent>
           </Card>
         </Link>
         <Card>
           <CardHeader className="flex-row items-center gap-3 space-y-0">
-            <Box className="size-5 text-primary" />
-            <CardTitle className="text-sm">家具</CardTitle>
+            <Layers className="size-5 text-primary" />
+            <CardTitle className="text-sm">区域</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{furnitureCount.count}</p>
+            <p className="text-3xl font-bold">{zoneCount.count}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex-row items-center gap-3 space-y-0">
+            <Box className="size-5 text-primary" />
+            <CardTitle className="text-sm">储物</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{storageCount.count}</p>
           </CardContent>
         </Card>
         <Card>
@@ -70,10 +80,10 @@ export default async function Home() {
 
       <div className="mb-6 flex gap-3">
         <Button asChild>
-          <Link href="/rooms">管理房间</Link>
+          <Link href="/locations">管理场所</Link>
         </Button>
         <Button variant="outline" asChild>
-          <Link href="/rooms/new">+ 新建房间</Link>
+          <Link href="/locations/new">+ 新建场所</Link>
         </Button>
       </div>
 
@@ -84,7 +94,7 @@ export default async function Home() {
         <CardContent>
           {recentItems.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4 text-center">
-              还没有物品，去房间里添加吧
+              还没有物品，去场所里添加吧
             </p>
           ) : (
             <ul className="divide-y divide-border">
@@ -95,7 +105,7 @@ export default async function Home() {
                 >
                   <span className="font-medium">{item.name}</span>
                   <span className="text-muted-foreground">
-                    {item.roomName} → {item.furnitureName}
+                    {item.locationName} → {item.zoneName} → {item.storageName}
                     {item.layerIndex !== null && item.layerIndex >= 0
                       ? ` → 第${item.layerIndex + 1}层`
                       : item.layerIndex === -1

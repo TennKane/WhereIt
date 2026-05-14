@@ -1,7 +1,16 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
-export const rooms = sqliteTable("rooms", {
+export const users = sqliteTable("users", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  email: text("email").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const locations = sqliteTable("locations", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
@@ -11,13 +20,26 @@ export const rooms = sqliteTable("rooms", {
   updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const furnitures = sqliteTable("furnitures", {
+export const zones = sqliteTable("zones", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
-  roomId: text("room_id")
+  locationId: text("location_id")
     .notNull()
-    .references(() => rooms.id),
+    .references(() => locations.id),
+  name: text("name").notNull(),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const storages = sqliteTable("storages", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  zoneId: text("zone_id")
+    .notNull()
+    .references(() => zones.id),
   name: text("name").notNull(),
   layers: integer("layers").default(1),
   description: text("description"),
@@ -30,9 +52,9 @@ export const items = sqliteTable("items", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
-  furnitureId: text("furniture_id")
+  storageId: text("storage_id")
     .notNull()
-    .references(() => furnitures.id),
+    .references(() => storages.id),
   layerIndex: integer("layer_index").default(0),
   name: text("name").notNull(),
   description: text("description"),
