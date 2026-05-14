@@ -7,7 +7,6 @@ import { z } from "zod";
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET ?? "whereit-dev-secret-change-in-production",
