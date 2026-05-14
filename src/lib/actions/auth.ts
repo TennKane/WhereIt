@@ -24,71 +24,87 @@ const loginSchema = z.object({
 });
 
 export async function register(_: unknown, formData: FormData) {
-  const parsed = registerSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success)
-    return { success: false as const, fieldErrors: parsed.error.flatten().fieldErrors };
+  try {
+    const parsed = registerSchema.safeParse(Object.fromEntries(formData));
+    if (!parsed.success)
+      return { success: false as const, fieldErrors: parsed.error.flatten().fieldErrors };
 
-  const { email, password } = parsed.data;
+    const { email, password } = parsed.data;
 
-  const existing = await db.select().from(users).where(eq(users.email, email)).get();
-  if (existing) {
-    return { success: false as const, fieldErrors: { email: ["该邮箱已注册"] } };
+    const existing = await db.select().from(users).where(eq(users.email, email)).get();
+    if (existing) {
+      return { success: false as const, fieldErrors: { email: ["该邮箱已注册"] } };
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    await db.insert(users).values({ email, passwordHash });
+
+    const token = await new SignJWT({ email })
+      .setProtectedHeader({ alg: "HS256" })
+      .setIssuedAt()
+      .setExpirationTime("7d")
+      .sign(JWT_SECRET);
+
+    const cookieStore = await cookies();
+    cookieStore.set("session", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60,
+      path: "/",
+    });
+
+    return { success: true as const, message: "注册成功" };
+  } catch (error) {
+    console.error("注册失败:", error);
+    return {
+      success: false as const,
+      fieldErrors: { email: ["注册失败，请稍后重试"] },
+    };
   }
-
-  const passwordHash = await bcrypt.hash(password, 10);
-  await db.insert(users).values({ email, passwordHash });
-
-  const token = await new SignJWT({ email })
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime("7d")
-    .sign(JWT_SECRET);
-
-  const cookieStore = await cookies();
-  cookieStore.set("session", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 7 * 24 * 60 * 60,
-    path: "/",
-  });
-
-  return { success: true as const, message: "注册成功" };
 }
 
 export async function login(_: unknown, formData: FormData) {
-  const parsed = loginSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success)
-    return { success: false as const, fieldErrors: parsed.error.flatten().fieldErrors };
+  try {
+    const parsed = loginSchema.safeParse(Object.fromEntries(formData));
+    if (!parsed.success)
+      return { success: false as const, fieldErrors: parsed.error.flatten().fieldErrors };
 
-  const { email, password } = parsed.data;
+    const { email, password } = parsed.data;
 
-  const user = await db.select().from(users).where(eq(users.email, email)).get();
-  if (!user) {
-    return { success: false as const, fieldErrors: { email: ["邮箱或密码错误"] } };
+    const user = await db.select().from(users).where(eq(users.email, email)).get();
+    if (!user) {
+      return { success: false as const, fieldErrors: { email: ["邮箱或密码错误"] } };
+    }
+
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) {
+      return { success: false as const, fieldErrors: { email: ["邮箱或密码错误"] } };
+    }
+
+    const token = await new SignJWT({ email })
+      .setProtectedHeader({ alg: "HS256" })
+      .setIssuedAt()
+      .setExpirationTime("7d")
+      .sign(JWT_SECRET);
+
+    const cookieStore = await cookies();
+    cookieStore.set("session", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60,
+      path: "/",
+    });
+
+    return { success: true as const, message: "登录成功" };
+  } catch (error) {
+    console.error("登录失败:", error);
+    return {
+      success: false as const,
+      fieldErrors: { email: ["登录失败，请稍后重试"] },
+    };
   }
-
-  const valid = await bcrypt.compare(password, user.passwordHash);
-  if (!valid) {
-    return { success: false as const, fieldErrors: { email: ["邮箱或密码错误"] } };
-  }
-
-  const token = await new SignJWT({ email })
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime("7d")
-    .sign(JWT_SECRET);
-
-  const cookieStore = await cookies();
-  cookieStore.set("session", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 7 * 24 * 60 * 60,
-    path: "/",
-  });
-
-  return { success: true as const, message: "登录成功" };
 }
 
 export async function logout() {
