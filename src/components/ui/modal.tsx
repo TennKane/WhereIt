@@ -16,7 +16,7 @@ export function Modal({ open, onClose, title, children }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]">
       <div
-        className="fixed inset-0"
+        className="fixed inset-0 bg-black/[0.04]"
         onClick={onClose}
       />
       <div className="relative w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-lg">
