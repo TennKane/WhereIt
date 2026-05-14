@@ -3,12 +3,12 @@ import { locations, zones, storages } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Plus, Trash2, Layers } from "lucide-react";
+import { Plus, Layers, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { deleteZone } from "@/lib/actions/zone";
-import { deleteLocation } from "@/lib/actions/location";
+import { DeleteLocationButton } from "./delete-button";
 
 export const dynamic = "force-dynamic";
 
@@ -52,11 +52,7 @@ export default async function LocationDetailPage({
                 添加区域
               </Link>
             </Button>
-            <form action={deleteLocation.bind(null, locationId)}>
-              <Button variant="ghost" size="icon" type="submit">
-                <Trash2 className="size-4 text-muted-foreground" />
-              </Button>
-            </form>
+            <DeleteLocationButton locationId={locationId} locationName={location.name} />
           </div>
         </div>
       </div>

@@ -2,10 +2,10 @@ import { db } from "@/lib/db";
 import { locations, zones, storages } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 import Link from "next/link";
-import { MapPin, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/shared/empty-state";
+import { LocationCard } from "@/components/locations/location-card";
 
 export const dynamic = "force-dynamic";
 
@@ -52,19 +52,13 @@ export default async function LocationsPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {allLocations.map((loc) => (
-          <Link key={loc.id} href={`/locations/${loc.id}`}>
-            <Card className="transition-shadow hover:shadow-md">
-              <CardHeader className="flex-row items-center gap-3 space-y-0">
-                <MapPin className="size-5 text-primary" />
-                <CardTitle>{loc.name}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  {loc.zoneCount} 个区域 · {loc.storageCount} 个储物
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
+          <LocationCard
+            key={loc.id}
+            id={loc.id}
+            name={loc.name}
+            zoneCount={loc.zoneCount}
+            storageCount={loc.storageCount}
+          />
         ))}
       </div>
     </div>
