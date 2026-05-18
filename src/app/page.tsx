@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { locations, zones, storages, items } from "@/lib/db/schema";
 import { eq, count, sql } from "drizzle-orm";
-import { MapPin, Layers, Box, Package } from "lucide-react";
+import { Star, MapPin, Layers, Box, Package } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -12,6 +12,18 @@ export default async function Home() {
   const [zoneCount] = await db.select({ count: count() }).from(zones);
   const [storageCount] = await db.select({ count: count() }).from(storages);
   const [itemCount] = await db.select({ count: count() }).from(items);
+
+  const favoriteZones = await db
+    .select({
+      id: zones.id,
+      name: zones.name,
+      locationName: locations.name,
+      locationId: locations.id,
+    })
+    .from(zones)
+    .innerJoin(locations, eq(zones.locationId, locations.id))
+    .where(eq(zones.isFavorite, 1))
+    .orderBy(zones.sortOrder);
 
   const recentItems = await db
     .select({
@@ -47,15 +59,17 @@ export default async function Home() {
             </CardContent>
           </Card>
         </Link>
-        <Card>
-          <CardHeader className="flex-row items-center gap-3 space-y-0">
-            <Layers className="size-5 text-primary" />
-            <CardTitle className="text-sm">区域</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{zoneCount.count}</p>
-          </CardContent>
-        </Card>
+        <Link href="/locations">
+          <Card className="transition-shadow hover:shadow-md">
+            <CardHeader className="flex-row items-center gap-3 space-y-0">
+              <Layers className="size-5 text-primary" />
+              <CardTitle className="text-sm">区域</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">{zoneCount.count}</p>
+            </CardContent>
+          </Card>
+        </Link>
         <Card>
           <CardHeader className="flex-row items-center gap-3 space-y-0">
             <Box className="size-5 text-primary" />
@@ -75,6 +89,30 @@ export default async function Home() {
           </CardContent>
         </Card>
       </div>
+
+      {favoriteZones.length > 0 && (
+        <div className="mb-8">
+          <h2 className="mb-3 text-base font-semibold flex items-center gap-1.5">
+            <Star className="size-4 fill-yellow-400 text-yellow-400" />
+            常用区域
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {favoriteZones.map((z) => (
+              <Link key={z.id} href={`/locations/${z.locationId}/zones/${z.id}`}>
+                <Card className="transition-shadow hover:shadow-md">
+                  <CardHeader className="flex-row items-center gap-3 space-y-0">
+                    <Star className="size-4 fill-yellow-400/20 text-yellow-500" />
+                    <div>
+                      <CardTitle className="text-sm">{z.name}</CardTitle>
+                      <p className="text-xs text-muted-foreground">{z.locationName}</p>
+                    </div>
+                  </CardHeader>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Card>
         <CardHeader>

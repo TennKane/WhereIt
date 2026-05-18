@@ -34,3 +34,13 @@ export async function deleteZone(id: string) {
     revalidatePath(`/locations/${zone.locationId}`);
   }
 }
+
+export async function toggleFavorite(_: unknown, formData: FormData) {
+  const id = formData.get("id") as string;
+  const value = formData.get("isFavorite") === "1" ? 0 : 1;
+  if (!id) return;
+  await db.update(zones).set({ isFavorite: value }).where(eq(zones.id, id));
+  revalidatePath("/");
+  const zone = await db.select({ locationId: zones.locationId }).from(zones).where(eq(zones.id, id)).get();
+  if (zone) revalidatePath(`/locations/${zone.locationId}`);
+}

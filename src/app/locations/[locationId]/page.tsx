@@ -20,6 +20,7 @@ export default async function LocationDetailPage({
     .select({
       id: zones.id,
       name: zones.name,
+      isFavorite: zones.isFavorite,
       storageCount: sql<number>`count(distinct ${storages.id})`,
     })
     .from(zones)

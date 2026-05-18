@@ -28,6 +28,7 @@ export const zones = sqliteTable("zones", {
     .notNull()
     .references(() => locations.id),
   name: text("name").notNull(),
+  isFavorite: integer("is_favorite").default(0),
   sortOrder: integer("sort_order").default(0),
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`),

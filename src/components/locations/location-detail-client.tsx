@@ -2,19 +2,20 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, Layers, Trash2 } from "lucide-react";
+import { Plus, Layers, Trash2, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Modal } from "@/components/ui/modal";
 import { ZoneCreateForm } from "@/components/forms/zone-create-form";
 import { DeleteLocationButton } from "@/app/locations/[locationId]/delete-button";
-import { deleteZone } from "@/lib/actions/zone";
+import { deleteZone, toggleFavorite } from "@/lib/actions/zone";
 
 interface ZoneItem {
   id: string;
   name: string;
   storageCount: number;
+  isFavorite: number | null;
 }
 
 interface Props {
@@ -90,14 +91,20 @@ export function LocationDetailClient({ locationId, locationName, zones }: Props)
                 <div className="flex-1">
                   <CardTitle className="text-base">{z.name}</CardTitle>
                 </div>
-                <form
-                  action={deleteZone.bind(null, z.id)}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Button variant="ghost" size="icon" type="submit" className="size-8">
-                    <Trash2 className="size-3.5 text-muted-foreground" />
-                  </Button>
-                </form>
+                <div className="flex gap-0.5" onClick={(e) => e.stopPropagation()}>
+                  <form action={toggleFavorite}>
+                    <input type="hidden" name="id" value={z.id} />
+                    <input type="hidden" name="isFavorite" value={String(z.isFavorite ?? 0)} />
+                    <Button variant="ghost" size="icon" type="submit" className="size-8">
+                      <Star className={`size-3.5 ${z.isFavorite ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />
+                    </Button>
+                  </form>
+                  <form action={deleteZone.bind(null, z.id)}>
+                    <Button variant="ghost" size="icon" type="submit" className="size-8">
+                      <Trash2 className="size-3.5 text-muted-foreground" />
+                    </Button>
+                  </form>
+                </div>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
