@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Modal } from "@/components/ui/modal";
 import { ItemCreateForm, type ShelfData } from "@/components/forms/item-create-form";
+import { ItemEditForm } from "@/components/forms/item-edit-form";
 import { deleteItem } from "@/lib/actions/item";
 
 interface Item {
@@ -38,6 +39,7 @@ export function StorageDetailClient({
   shelves, itemsByShelfRow,
 }: Props) {
   const [open, setOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<Item | null>(null);
   const allItems = Object.values(itemsByShelfRow).flat();
   const hasItems = allItems.length > 0;
 
@@ -167,10 +169,8 @@ export function StorageDetailClient({
                               </div>
                             </CardHeader>
                             <div className="flex gap-1 absolute right-2 top-2">
-                              <Button variant="ghost" size="icon" asChild className="size-7">
-                                <Link href={`/items/${item.id}/edit`}>
-                                  <span className="text-xs text-muted-foreground">✎</span>
-                                </Link>
+                              <Button variant="ghost" size="icon" className="size-7" onClick={() => setEditingItem(item)}>
+                                <span className="text-xs text-muted-foreground">✎</span>
                               </Button>
                               <form action={deleteItem.bind(null, item.id)}>
                                 <Button variant="ghost" size="icon" type="submit" className="size-7">
@@ -198,6 +198,26 @@ export function StorageDetailClient({
           shelves={shelves}
           onSuccess={() => setOpen(false)}
         />
+      </Modal>
+
+      <Modal open={!!editingItem} onClose={() => setEditingItem(null)} title="编辑物品">
+        {editingItem && (
+          <ItemEditForm
+            itemId={editingItem.id}
+            storageId={storageId}
+            zoneId={zoneId}
+            locationId={locationId}
+            shelves={shelves}
+            defaultValues={{
+              name: editingItem.name,
+              quantity: editingItem.quantity ?? 1,
+              description: editingItem.description,
+              shelfIndex: editingItem.shelfIndex ?? 0,
+              rowIndex: editingItem.rowIndex ?? 0,
+            }}
+            onSuccess={() => setEditingItem(null)}
+          />
+        )}
       </Modal>
     </div>
   );

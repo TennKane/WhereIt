@@ -15,6 +15,7 @@ export function ItemEditForm({
   locationId,
   shelves,
   defaultValues,
+  onSuccess,
 }: {
   itemId: string;
   storageId: string;
@@ -28,6 +29,7 @@ export function ItemEditForm({
     shelfIndex: number;
     rowIndex: number;
   };
+  onSuccess?: () => void;
 }) {
   const router = useRouter();
   const [shelfIndex, setShelfIndex] = useState(defaultValues.shelfIndex);
@@ -42,9 +44,10 @@ export function ItemEditForm({
   useEffect(() => {
     if (state.success) {
       toast.success(state.message ?? "保存成功");
-      router.push(`/locations/${locationId}/zones/${zoneId}/storages/${storageId}`);
+      if (onSuccess) onSuccess();
+      else router.push(`/locations/${locationId}/zones/${zoneId}/storages/${storageId}`);
     }
-  }, [state.success, state.message, router, locationId, zoneId, storageId]);
+  }, [state.success, state.message, onSuccess, router, locationId, zoneId, storageId]);
 
   return (
     <form action={formAction} className="space-y-4">
