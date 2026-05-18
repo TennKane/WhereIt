@@ -35,7 +35,7 @@ export async function deleteZone(id: string) {
   }
 }
 
-export async function toggleFavorite(_: unknown, formData: FormData) {
+export async function toggleFavorite(formData: FormData) {
   const id = formData.get("id") as string;
   const value = formData.get("isFavorite") === "1" ? 0 : 1;
   if (!id) return;
