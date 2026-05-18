@@ -14,8 +14,8 @@ export function Modal({ open, onClose, title, children }: Props) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] pointer-events-none">
-      <div className="w-full max-w-sm rounded-xl border-2 border-border bg-neutral-100 dark:bg-neutral-800 p-6 shadow-2xl pointer-events-auto">
+    <div className="fixed inset-0 z-50 flex items-start justify-center py-8 overflow-y-auto pointer-events-none">
+      <div className="w-full max-w-sm my-auto rounded-xl border-2 border-border bg-neutral-100 dark:bg-neutral-800 p-6 shadow-2xl pointer-events-auto">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-semibold">{title}</h3>
           <button
