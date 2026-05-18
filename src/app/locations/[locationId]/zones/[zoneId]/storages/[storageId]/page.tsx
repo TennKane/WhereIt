@@ -55,6 +55,7 @@ export default async function StorageDetailPage({
       storageName={storage.name}
       storageDescription={storage.description}
       shelves={shelves}
+      shelvesRaw={storage.shelves}
       itemsByShelfRow={itemsByShelfRow}
     />
   );

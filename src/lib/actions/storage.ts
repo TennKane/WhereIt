@@ -3,13 +3,20 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { zones, storages, items } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
 const createSchema = z.object({
   name: z.string().min(1, "储物名不能为空").max(30),
   zoneId: z.string().min(1),
-  shelves: z.string().min(2, "请至少添加一层"), // JSON string
+  shelves: z.string().min(2, "请至少添加一层"),
+  description: z.string().max(200).optional(),
+});
+
+const updateSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1, "储物名不能为空").max(30),
+  shelves: z.string().min(2, "请至少添加一层"),
   description: z.string().max(200).optional(),
 });
 
@@ -33,6 +40,30 @@ export async function createStorage(_: unknown, formData: FormData) {
 
   if (zone) revalidatePath(`/locations/${zone.locationId}/zones/${parsed.data.zoneId}`);
   return { success: true as const, message: "储物创建成功" };
+}
+
+export async function updateStorage(_: unknown, formData: FormData) {
+  const parsed = updateSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success)
+    return { success: false as const, fieldErrors: parsed.error.flatten().fieldErrors };
+
+  try {
+    await db
+      .update(storages)
+      .set({
+        name: parsed.data.name,
+        shelves: parsed.data.shelves,
+        description: parsed.data.description ?? null,
+        updatedAt: sql`CURRENT_TIMESTAMP`,
+      })
+      .where(eq(storages.id, parsed.data.id));
+
+    revalidatePath("/locations");
+    return { success: true as const, message: "已更新" };
+  } catch (error) {
+    console.error("更新储物失败:", error);
+    return { success: false as const, message: "更新失败" };
+  }
 }
 
 export async function deleteStorage(id: string) {

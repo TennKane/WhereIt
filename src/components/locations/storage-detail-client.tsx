@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Plus, Trash2, Package } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Package, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Modal } from "@/components/ui/modal";
 import { ItemCreateForm, type ShelfData } from "@/components/forms/item-create-form";
 import { ItemEditForm } from "@/components/forms/item-edit-form";
+import { StorageCreateForm } from "@/components/forms/storage-create-form";
 import { deleteItem } from "@/lib/actions/item";
 
 interface Item {
@@ -30,15 +31,17 @@ interface Props {
   storageName: string;
   storageDescription: string | null;
   shelves: ShelfData[];
+  shelvesRaw: string;
   itemsByShelfRow: Record<string, Item[]>; // key: "shelfIndex-rowIndex"
 }
 
 export function StorageDetailClient({
   locationId, locationName, zoneId, zoneName,
   storageId, storageName, storageDescription,
-  shelves, itemsByShelfRow,
+  shelves, shelvesRaw, itemsByShelfRow,
 }: Props) {
   const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const allItems = Object.values(itemsByShelfRow).flat();
   const hasItems = allItems.length > 0;
@@ -74,10 +77,15 @@ export function StorageDetailClient({
                 <p className="text-xs text-muted-foreground mt-1">{storageDescription}</p>
               )}
             </div>
-            <Button onClick={() => setOpen(true)}>
-              <Plus className="size-4" />
-              添加物品
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" onClick={() => setEditOpen(true)}>
+                <Pencil className="size-4" />
+              </Button>
+              <Button onClick={() => setOpen(true)}>
+                <Plus className="size-4" />
+                添加物品
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -122,10 +130,15 @@ export function StorageDetailClient({
               <p className="text-xs text-muted-foreground mt-1">{storageDescription}</p>
             )}
           </div>
-          <Button onClick={() => setOpen(true)}>
-            <Plus className="size-4" />
-            添加物品
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" onClick={() => setEditOpen(true)}>
+              <Pencil className="size-4" />
+            </Button>
+            <Button onClick={() => setOpen(true)}>
+              <Plus className="size-4" />
+              添加物品
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -218,6 +231,18 @@ export function StorageDetailClient({
             onSuccess={() => setEditingItem(null)}
           />
         )}
+      </Modal>
+
+      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="编辑储物">
+        <StorageCreateForm
+          zoneId={zoneId}
+          locationId={locationId}
+          storageId={storageId}
+          defaultShelves={shelvesRaw}
+          defaultName={storageName}
+          defaultDescription={storageDescription}
+          onSuccess={() => setEditOpen(false)}
+        />
       </Modal>
     </div>
   );

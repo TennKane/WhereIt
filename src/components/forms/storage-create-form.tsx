@@ -4,43 +4,46 @@ import { useState, useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Plus, Trash2, GripVertical } from "lucide-react";
-import { createStorage } from "@/lib/actions/storage";
+import { createStorage, updateStorage } from "@/lib/actions/storage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-interface RowDef {
-  name: string;
-}
+interface RowDef { name: string }
+interface ShelfDef { name: string; rows: RowDef[] }
 
-interface ShelfDef {
-  name: string;
-  rows: RowDef[];
-}
-
-function defaultShelves(): ShelfDef[] {
-  return [{ name: "第一层", rows: [{ name: "第一格" }] }];
+function parseShelves(raw: string | null): ShelfDef[] {
+  try { return JSON.parse(raw ?? "[]"); } catch { return [{ name: "第一层", rows: [{ name: "第一格" }] }]; }
 }
 
 export function StorageCreateForm({
   zoneId,
   locationId,
+  storageId,
+  defaultShelves,
+  defaultName,
+  defaultDescription,
   onSuccess,
 }: {
   zoneId: string;
   locationId: string;
+  storageId?: string;
+  defaultShelves?: string;
+  defaultName?: string;
+  defaultDescription?: string | null;
   onSuccess?: () => void;
 }) {
   const router = useRouter();
-  const [shelves, setShelves] = useState<ShelfDef[]>(defaultShelves);
-  const [state, formAction, isPending] = useActionState(createStorage, null);
+  const isEdit = !!storageId;
+  const [shelves, setShelves] = useState<ShelfDef[]>(defaultShelves ? parseShelves(defaultShelves) : [{ name: "第一层", rows: [{ name: "第一格" }] }]);
+  const [state, formAction, isPending] = useActionState(isEdit ? updateStorage : createStorage, null);
 
   useEffect(() => {
     if (state?.success) {
-      toast.success(state.message ?? "创建成功");
+      toast.success(state.message ?? (isEdit ? "已更新" : "创建成功"));
       if (onSuccess) onSuccess();
-      else router.push(`/locations/${locationId}/zones/${zoneId}`);
+      else if (!isEdit) router.push(`/locations/${locationId}/zones/${zoneId}`);
     }
-  }, [state, onSuccess, router, locationId, zoneId]);
+  }, [state, onSuccess, router, locationId, zoneId, isEdit]);
 
   function updateShelf(index: number, name: string) {
     setShelves(shelves.map((s, i) => i === index ? { ...s, name } : s));
@@ -72,25 +75,18 @@ export function StorageCreateForm({
     setShelves(shelves.filter((_, i) => i !== index));
   }
 
-  // hidden input to submit shelves JSON
   const shelvesJson = JSON.stringify(shelves);
 
   return (
     <form action={formAction} className="space-y-4">
-      <input type="hidden" name="zoneId" value={zoneId} />
+      {isEdit ? <input type="hidden" name="id" value={storageId} /> : <input type="hidden" name="zoneId" value={zoneId} />}
       <input type="hidden" name="shelves" value={shelvesJson} />
 
       <div>
         <label htmlFor="name" className="mb-1.5 block text-sm font-medium">
           储物名称
         </label>
-        <Input
-          id="name"
-          name="name"
-          placeholder="例如：茶几、衣柜、书架"
-          required
-          autoFocus
-        />
+        <Input id="name" name="name" placeholder="例如：茶几、衣柜、书架" required autoFocus defaultValue={defaultName} />
         {state?.fieldErrors?.name && (
           <p className="mt-1 text-sm text-red-500">{state.fieldErrors.name[0]}</p>
         )}
@@ -100,8 +96,7 @@ export function StorageCreateForm({
         <div className="mb-2 flex items-center justify-between">
           <label className="text-sm font-medium">层格规格</label>
           <Button type="button" variant="outline" size="sm" onClick={addShelf}>
-            <Plus className="size-3" />
-            添加层
+            <Plus className="size-3" />添加层
           </Button>
         </div>
 
@@ -117,11 +112,7 @@ export function StorageCreateForm({
                   placeholder="层名称"
                 />
                 {shelves.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeShelf(si)}
-                    className="text-muted-foreground hover:text-red-500"
-                  >
+                  <button type="button" onClick={() => removeShelf(si)} className="text-muted-foreground hover:text-red-500">
                     <Trash2 className="size-4" />
                   </button>
                 )}
@@ -137,19 +128,14 @@ export function StorageCreateForm({
                       placeholder="格名称"
                     />
                     {shelf.rows.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeRow(si, ri)}
-                        className="text-muted-foreground hover:text-red-500"
-                      >
+                      <button type="button" onClick={() => removeRow(si, ri)} className="text-muted-foreground hover:text-red-500">
                         <Trash2 className="size-3" />
                       </button>
                     )}
                   </div>
                 ))}
                 <Button type="button" variant="ghost" size="sm" onClick={() => addRow(si)} className="h-7 text-xs">
-                  <Plus className="size-3" />
-                  添加格
+                  <Plus className="size-3" />添加格
                 </Button>
               </div>
             </div>
@@ -164,11 +150,11 @@ export function StorageCreateForm({
         <label htmlFor="description" className="mb-1.5 block text-sm font-medium">
           备注（可选）
         </label>
-        <Input id="description" name="description" placeholder="尺寸、颜色等" />
+        <Input id="description" name="description" placeholder="尺寸、颜色等" defaultValue={defaultDescription ?? ""} />
       </div>
 
       <Button type="submit" className="w-full" disabled={isPending}>
-        {isPending ? "创建中..." : "创建"}
+        {isPending ? "保存中..." : (isEdit ? "保存" : "创建")}
       </Button>
     </form>
   );
